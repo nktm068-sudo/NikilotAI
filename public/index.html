@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🤖 NikilotAI - GitHub Copilot Chatbot</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+    }
+    .container {
+      width: 100%;
+      max-width: 700px;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      height: 90vh;
+      max-height: 700px;
+    }
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      text-align: center;
+      border-radius: 15px 15px 0 0;
+      border-bottom: 3px solid #764ba2;
+    }
+    .header h1 { font-size: 28px; margin-bottom: 5px; }
+    .header p { font-size: 12px; opacity: 0.9; }
+    .badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.2);
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      margin-top: 10px;
+    }
+    .chat-box {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: #f8f9fa;
+    }
+    .message {
+      padding: 12px 16px;
+      border-radius: 12px;
+      max-width: 85%;
+      word-wrap: break-word;
+      line-height: 1.4;
+      animation: slideIn 0.3s ease-out;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .user {
+      align-self: flex-end;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 15px 15px 5px 15px;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+    .ai {
+      align-self: flex-start;
+      background: white;
+      color: #333;
+      border: 1px solid #e0e0e0;
+      border-radius: 15px 15px 15px 5px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .typing {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      padding: 15px;
+    }
+    .typing span {
+      width: 8px;
+      height: 8px;
+      background: #667eea;
+      border-radius: 50%;
+      animation: typing 1.4s infinite;
+    }
+    .typing span:nth-child(2) { animation-delay: 0.2s; }
+    .typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typing {
+      0%, 60%, 100% { opacity: 0.3; }
+      30% { opacity: 1; }
+    }
+    .input-area {
+      display: flex;
+      gap: 10px;
+      padding: 15px;
+      border-top: 2px solid #eee;
+      background: white;
+      border-radius: 0 0 15px 15px;
+    }
+    #input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      transition: all 0.3s;
+    }
+    #input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    #input::placeholder {
+      color: #aaa;
+    }
+    button {
+      padding: 12px 25px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      transition: all 0.3s;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .error {
+      background: #fee;
+      color: #c33;
+      border: 1px solid #fcc;
+    }
+    .info {
+      background: #efe;
+      color: #3c3;
+      border: 1px solid #cfc;
+    }
+    .scroll-hint {
+      text-align: center;
+      color: #999;
+      font-size: 12px;
+      padding-top: 10px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🤖 NikilotAI</h1>
+      <p>Чат с GitHub Copilot</p>
+      <div class="badge">⚡ Powered by GitHub Copilot API</div>
+    </div>
+    
+    <div class="chat-box" id="chat"></div>
+    
+    <div class="input-area">
+      <input 
+        id="input" 
+        type="text" 
+        placeholder="Напиши вопрос или код..."
+        autocomplete="off"
+      >
+      <button id="sendBtn" onclick="sendMessage()">📤 Отправить</button>
+    </div>
+  </div>
+
+  <script>
+    const chatBox = document.getElementById('chat');
+    const input = document.getElementById('input');
+    const sendBtn = document.getElementById('sendBtn');
+
+    async function sendMessage() {
+      const message = input.value.trim();
+      
+      if (!message) return;
+
+      addMessage(message, 'user');
+      input.value = '';
+      sendBtn.disabled = true;
+
+      // Показываем анимацию печати
+      const typingDiv = document.createElement('div');
+      typingDiv.className = 'message ai typing';
+      typingDiv.innerHTML = '<span></span><span></span><span></span>';
+      typingDiv.id = 'typing';
+      chatBox.appendChild(typingDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message })
+        });
+
+        const data = await res.json();
+        
+        // Удаляем анимацию печати
+        const typing = document.getElementById('typing');
+        if (typing) typing.remove();
+
+        if (res.ok) {
+          addMessage(data.reply, 'ai');
+        } else {
+          addMessage(data.error || '❌ Ошибка при получении ответа', 'ai error');
+        }
+      } catch (error) {
+        const typing = document.getElementById('typing');
+        if (typing) typing.remove();
+        addMessage('❌ Ошибка сети: ' + error.message, 'ai error');
+      } finally {
+        sendBtn.disabled = false;
+        input.focus();
+      }
+    }
+
+    function addMessage(text, sender) {
+      const div = document.createElement('div');
+      div.className = 'message ' + sender;
+      div.textContent = text;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // Enter для отправки
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // Приветствие
+    window.addEventListener('load', () => {
+      addMessage('👋 Привет! Я NikilotAI, твой помощник на базе GitHub Copilot. Чем я могу тебе помочь?', 'ai info');
+      input.focus();
+    });
+  </script>
+</body>
+</html>
